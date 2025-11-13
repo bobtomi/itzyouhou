@@ -1,0 +1,419 @@
+/* css/style.css (最終修正版 - 問題数設定欄のスタイルを含む) */
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+}
+
+header {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5em;
+}
+
+nav {
+    margin-top: 10px;
+}
+
+nav button {
+    background-color: #0056b3;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    margin-right: 5px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+nav button:hover {
+    background-color: #004085;
+}
+
+main {
+    padding: 20px;
+    max-width: 900px;
+    margin: 20px auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+}
+
+/* クイズビューのスタイル */
+#quiz-header {
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+#question-text-area {
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+#choices-container label {
+    display: block;
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+#choices-container label:hover {
+    background-color: #f8f8f8;
+}
+
+#choices-container input[type="radio"] {
+    margin-right: 10px;
+}
+
+/* 結果表示エリア */
+#result-area {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+}
+
+#result-area h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+#explanation-area {
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #f0f8ff;
+    border: 1px solid #bce2f5;
+    border-radius: 4px;
+}
+
+.controls button {
+    padding: 10px 20px;
+    margin-top: 20px;
+    margin-right: 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+.controls button:hover {
+    background-color: #1e7e34;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* --- 用語集スタイル --- */
+#glossary-list {
+    margin-top: 20px;
+    display: grid; /* グリッドレイアウトでカードを横並びに */
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px; /* カード間のスペース */
+}
+
+.glossary-item {
+    border: 1px solid #e0e0e0;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* 影でカード感を出す */
+    transition: transform 0.2s;
+    height: fit-content; /* 内容に応じた高さ */
+}
+
+.glossary-item:hover {
+    transform: translateY(-3px); /* ホバーで少し浮き上がるアニメーション */
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
+}
+
+.glossary-item h4 {
+    /* メインの用語名 */
+    background-color: #007bff; /* プライマリカラーの背景 */
+    color: white;
+    padding: 8px 12px;
+    /* カードの縁まで背景色を広げる */
+    margin: -20px -20px 15px -20px; 
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-bottom: none; 
+}
+
+.term-definition {
+    margin-top: 15px;
+}
+
+.term-definition dt {
+    font-weight: bold;
+    color: #333; 
+    border-left: 3px solid #ffc107; /* 黄色のラインで定義をハイライト */
+    padding-left: 10px;
+    margin-bottom: 5px;
+    font-size: 1.05em;
+}
+
+.term-definition dd {
+    margin-left: 0; /* 左マージンを解除し、綺麗に揃える */
+    padding-left: 15px;
+    margin-bottom: 15px;
+    line-height: 1.5;
+    color: #555;
+}
+
+
+/* HTMLテーブルの基本スタイル（省略） */
+#quiz-container table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+#quiz-container th, #quiz-container td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: center;
+}
+#quiz-container thead th {
+    background-color: #f2f2f2;
+}
+
+/* 数式の表示（省略） */
+.katex-display {
+    text-align: left !important;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    overflow-x: auto;
+}
+
+/* --- 設定エリアの共通スタイル --- */
+
+#timer-container,
+#question-count-container {
+    padding: 10px 0;
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0px; /* 連続する設定エリア間のマージンを調整 */
+}
+
+#timer-container {
+    margin-bottom: 5px;
+}
+
+#question-count-container {
+    border-top: none; /* 問題数とタイマーの間は線なしに */
+    margin-bottom: 15px;
+}
+
+#time-limit-select,
+#custom-time-limit,
+#question-count-input {
+    padding: 5px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    margin-left: 10px;
+    width: 100px;
+}
+
+
+#time-display {
+    display: flex; 
+    align-items: center;
+    width: 100%;
+    margin-top: 5px;
+}
+
+/* バーの背景（トラック）を追加 */
+#time-bar-track {
+    height: 20px;
+    background-color: #e9ecef; /* 明るいグレーの背景 */
+    border-radius: 5px;
+    margin-right: 10px;
+    flex-grow: 1; 
+    overflow: hidden; 
+    position: relative; 
+    width: 100%; 
+}
+
+#time-bar {
+    height: 100%;
+    background-color: #28a745; /* Green */
+    /* 0.98秒のトランジションを設定し、1秒間隔の更新と組み合わせて滑らかな動きを実現 */
+    transition: width 0.98s linear, background-color 0.5s; 
+    border-radius: 5px;
+    position: absolute; 
+    top: 0;
+    left: 0;
+    width: 100%; 
+    flex-grow: 0; 
+    flex-shrink: 0;
+}
+
+#time-display-text {
+    font-weight: bold;
+    color: #333;
+    font-size: 1.2em;
+    min-width: 80px; 
+    text-align: right;
+}
+
+/* --- 問題開始前のコンテナとボタンのスタイル --- */
+#question-pre-start {
+    text-align: center;
+    padding: 40px 20px;
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    background-color: #f8f8ff;
+    margin-bottom: 20px;
+}
+
+#start-quiz-set-btn { 
+    padding: 15px 30px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 15px;
+    transition: background-color 0.3s;
+}
+
+#start-quiz-set-btn:hover { 
+    background-color: #0056b3;
+}
+
+/* --- 最終結果表示の詳細エリア --- */
+#detailed-results {
+    margin-top: 30px;
+    padding-top: 15px;
+    border-top: 2px dashed #ccc;
+}
+
+#detailed-results h4 {
+    color: #007bff;
+}
+
+.result-item {
+    border: 1px solid #ffcccc;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    background-color: #fffafa;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.result-item.incorrect {
+    border-left: 5px solid #dc3545; /* 赤いラインで強調 */
+}
+
+.result-item h5 {
+    margin-top: 0;
+    color: #dc3545; /* 不正解は赤文字 */
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.question-snippet {
+    font-style: italic;
+    color: #666;
+    margin-bottom: 5px;
+}
+
+.user-answer-summary {
+    font-weight: bold;
+    color: #993300; /* ユーザーの解答を茶色系で */
+    margin-bottom: 5px;
+}
+
+.correct-answer-summary {
+    font-weight: bold;
+    color: #28a745; /* 正解を緑で */
+    margin-bottom: 15px;
+}
+
+.explanation-detail {
+    padding: 10px;
+    background-color: #f0f8ff;
+    border-radius: 4px;
+    border: 1px dashed #bce2f5;
+}
+
+.explanation-detail h6 {
+    margin-top: 0;
+    color: #007bff;
+    font-size: 1em;
+}
+
+.explanation-entry {
+    margin-bottom: 5px;
+    line-height: 1.4;
+}
+
+.all-correct-message {
+    text-align: center;
+    padding: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #28a745;
+    background-color: #e2f0d9;
+    border-radius: 5px;
+}
+/* css/style.css の末尾に追加 */
+
+/* 用語定義クイズの選択肢ボタンのスタイル */
+.quiz-choice-button {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    padding: 12px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s, box-shadow 0.2s;
+    text-align: left; /* テキストを左寄せに */
+}
+
+.quiz-choice-button:hover {
+    background-color: #f0f0f0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* ユーザーが選択した不正解の選択肢 */
+.quiz-choice-button.incorrect-selected {
+    background-color: #ffe0e0; /* 薄い赤 */
+    border-color: #dc3545; /* 赤 */
+    font-weight: bold;
+}
+
+/* ユーザーが選択した正解の選択肢（正解を選んだ場合） */
+.quiz-choice-button.correct-selected {
+    background-color: #e6ffec; /* 薄い緑 */
+    border-color: #28a745; /* 緑 */
+    font-weight: bold;
+}
+
+/* 正解の選択肢（ユーザーが間違えた場合にもハイライトされる） */
+.quiz-choice-button.correct-answer {
+    background-color: #e6ffec; /* 薄い緑 */
+    border-color: #28a745; /* 緑 */
+}
