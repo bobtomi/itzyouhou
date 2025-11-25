@@ -3,7 +3,7 @@
 const HOME_HTML = `
 <section id="home-view" class="view">
     <h2>ようこそ！</h2>
-    <p>基本情報技術者試験 令和6年度の公開問題で学習しましょう。上部のメニューから学習モードを選択してください。</p>
+    <p>基本情報技術者試験 令和6年度と令和7年度の公開問題で学習しましょう。上部のメニューから学習モードを選択してください。</p>
     <div class="stats">
         <p>総問題数: <span id="total-q-count-home">0</span> 問</p>
         <p>科目A問題数: <span id="subject-a-count-home">0</span> 問</p>
