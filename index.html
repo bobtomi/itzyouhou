@@ -12,15 +12,13 @@
     <header>
         <h1>基本情報技術者試験 令和6年度 公開問題</h1>
         <nav>
-            <button onclick="router.showView('home')">ホーム</button>
-            <button onclick="router.showQuizMode('科目A')">科目A</button>
-            <button onclick="router.showQuizMode('科目B')">科目B</button>
-            <button onclick="router.showQuizMode('ALL')">全科目</button>
-            <button onclick="router.showRandomMode()">ランダム</button>
-           <!-- <button onclick="router.showView('textbook')">教科書モード</button>-->
-            <button onclick="router.showView('term_quiz')">用語定義クイズ</button> <!-- 👈 用語定義クイズモードの追加 -->
-            <button onclick="router.showView('glossary')">用語集</button>
-        </nav>
+    <button onclick="router.showView('home')">ホーム</button>
+    <button onclick="router.showQuizMode('R7')">令和7年</button> 
+    <button onclick="router.showQuizMode('科目A')">科目A (R6)</button> <button onclick="router.showQuizMode('科目B')">科目B (R6)</button> <button onclick="router.showQuizMode('ALL')">全科目</button>
+    <button onclick="router.showRandomMode()"><span style="color:#ffc107;">ランダム</span></button>
+    <button onclick="router.showView('term_quiz')">用語定義クイズ</button>
+    <button onclick="router.showView('glossary')">用語集</button>
+</nav>
     </header>
 
     <main id="view-container">
@@ -42,4 +40,3 @@
     <script src="js/app.js"></script>
 </body>
 </html>
-
