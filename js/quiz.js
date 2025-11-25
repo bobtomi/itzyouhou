@@ -1,4 +1,4 @@
-// js/quiz.js (最終修正版 - 問題数設定の有効化ロジック修正)
+// js/quiz.js (完全・最終安定版 - 全ての不具合修正を統合)
 
 // クイズ画面のHTMLテンプレート
 const QUIZ_HTML = `
@@ -150,7 +150,7 @@ function initQuizDom() {
         questionPreStart: document.getElementById('question-pre-start'),
         startQuizSetBtn: document.getElementById('start-quiz-set-btn'),
 
-        // **追加**: 問題数入力要素
+        // 問題数入力要素
         questionCountInput: document.getElementById('question-count-input'),
 
         // 最終結果関連
@@ -160,9 +160,24 @@ function initQuizDom() {
     };
 }
 
+
+/**
+ * 配列をシャッフルする (Fisher-Yates)
+ * @param {Array} array
+ * @returns {Array} シャッフルされた配列
+ */
+function shuffleArray(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+}
+
+
 /**
  * クイズ開始処理 (初回のみ)
- * @param {string} mode 'A', 'B', 'ALL', 'RANDOM'
+ * @param {string} mode '科目A', '科目B', 'ALL', 'RANDOM', 'R7'
  */
 function startQuiz(mode) {
     if (typeof QUESTIONS === 'undefined') return;
@@ -171,28 +186,37 @@ function startQuiz(mode) {
     
     let fullQuestionPool = [];
 
-    // 問題セットの準備 (ここではフルセットを準備し、必要に応じてシャッフル)
+    // 問題セットの準備 (R6/R7フィルタリングロジック)
     if (mode === 'ALL') {
         fullQuestionPool = QUESTIONS;
         dom.quizTitle.textContent = "全科目クイズモード";
     } else if (mode === 'RANDOM') {
-        fullQuestionPool = shuffleArray([...QUESTIONS]); // 全問シャッフル
+        // ランダムモード: 全問題をシャッフルした配列を生成
+        fullQuestionPool = shuffleArray([...QUESTIONS]); 
         dom.quizTitle.textContent = "ランダムクイズモード";
+    } else if (mode === 'R7') { 
+        // 令和7年問題に限定 (IDが 'R7_' で始まる)
+        fullQuestionPool = QUESTIONS.filter(q => q.id && q.id.startsWith('R7_'));
+        dom.quizTitle.textContent = "令和7年 公開問題モード"; 
+    } else if (mode === '科目A' || mode === '科目B') { 
+        // 科目AまたはB かつ 令和6年問題に限定 (IDが 'R7_' で始まらない)
+        fullQuestionPool = QUESTIONS.filter(q => q.subject === mode && (!q.id || !q.id.startsWith('R7_')));
+        dom.quizTitle.textContent = `${mode} (令和6年) クイズモード`; 
     } else {
-        // 科目別モードではシャッフルしない
+        // デフォルト/その他の科目名
         fullQuestionPool = QUESTIONS.filter(q => q.subject === mode);
-        dom.quizTitle.textContent = `${mode} クイズモード`;
+        dom.quizTitle.textContent = `${mode} クイズモード`; 
     }
     
     // 問題数が0ならエラー
     if (fullQuestionPool.length === 0) {
-        alert("選択された科目の問題が見つかりませんでした。");
-        router.showView('home');
+        alert("選択されたモードの問題が見つかりませんでした。");
+        // routerオブジェクトが存在することを前提とする
+        if (typeof router !== 'undefined') router.showView('home');
         return;
     }
     
     // currentQuestionsSet は、ここではまだ fullQuestionPool を参照する
-    // 実際に使用する問題数は startQuizSetTimer で決定する
     currentQuestionsSet = fullQuestionPool; 
 
     // 問題数入力の最大値を設定し、デフォルト値をセット
@@ -201,8 +225,8 @@ function startQuiz(mode) {
         dom.questionCountInput.placeholder = `全問 (最大${maxQuestions}問)`;
         dom.questionCountInput.max = maxQuestions;
         
-        // **修正**: ランダムモードまたは全科目モードでのみ問題数設定を許可
-        const allowCountSetting = (mode === 'ALL' || mode === 'RANDOM');
+        // 問題数設定を許可するモードを定義 (ALL, RANDOM, R7)
+        const allowCountSetting = (mode === 'ALL' || mode === 'RANDOM' || mode === 'R7');
         
         // デフォルト値を設定 (設定可能なら20問か全問、不可なら全問)
         const defaultCount = allowCountSetting ? Math.min(20, maxQuestions) : maxQuestions;
@@ -214,21 +238,22 @@ function startQuiz(mode) {
     
     // 初期化
     currentQuestionIndex = 0;
-    userAnswers = new Array(currentQuestionsSet.length).fill(null);
+    userAnswers = new Array(currentQuestionsSet.length).fill(null); 
     score = 0;
-    quizStarted = false; // クイズ開始フラグをリセット
-    stopTimer(); // 念のためタイマーを停止
-    // 初期設定の時間を取得（DOM要素がまだ存在しない場合があるため、初期値を使用）
+    quizStarted = false; 
+    stopTimer(); 
+
+    // 初期設定の時間を取得
     initialTimeLimit = parseInt(dom.timeLimitSelect ? dom.timeLimitSelect.value : 1800, 10);
     timeRemaining = 0;
-    dom.totalQCount.textContent = currentQuestionsSet.length; // 初期表示はフル問題数
+    dom.totalQCount.textContent = currentQuestionsSet.length; 
     
     // 採点モードの初期設定とイベントリスナー
     const immediateModeRadio = document.getElementById('mode-immediate');
     const finalModeRadio = document.getElementById('mode-final');
-    immediateModeRadio.onchange = () => setGradingMode('immediate');
-    finalModeRadio.onchange = () => setGradingMode('final');
-    gradingMode = immediateModeRadio.checked ? 'immediate' : 'final';
+    if (immediateModeRadio) immediateModeRadio.onchange = () => setGradingMode('immediate');
+    if (finalModeRadio) finalModeRadio.onchange = () => setGradingMode('final');
+    gradingMode = immediateModeRadio && immediateModeRadio.checked ? 'immediate' : 'final';
     setGradingMode(gradingMode); 
     
     // 制限時間選択のイベントリスナー
@@ -249,9 +274,9 @@ function startQuiz(mode) {
     }
     
     // ボタンのイベントリスナーを設定
-    dom.checkBtn.onclick = checkAnswer;
-    dom.nextBtn.onclick = loadNextQuestion;
-    dom.endBtn.onclick = showFinalResults;
+    if (dom.checkBtn) dom.checkBtn.onclick = checkAnswer;
+    if (dom.nextBtn) dom.nextBtn.onclick = loadNextQuestion;
+    if (dom.endBtn) dom.endBtn.onclick = showFinalResults;
     
     // クイズ開始ボタンのイベントリスナー
     if (dom.startQuizSetBtn) {
@@ -264,19 +289,6 @@ function startQuiz(mode) {
 
 
 /**
- * 配列をシャッフルする (Fisher-Yates)
- * @param {Array} array
- * @returns {Array} シャッフルされた配列
- */
-function shuffleArray(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-    }
-    return array;
-}
-
-/**
  * 採点モードの切り替え
  * @param {string} mode 'immediate' or 'final'
  */
@@ -285,10 +297,8 @@ function setGradingMode(mode) {
     const dom = initQuizDom();
     
     if (gradingMode === 'final') {
-        // 最終採点モードではcheckBtnが「次の問題へ/終了」の役割を果たす
         dom.checkBtn.textContent = (currentQuestionIndex < currentQuestionsSet.length - 1) ? "次の問題へ" : "終了して結果を見る";
         
-        // クイズが開始されているか、または問題スタート画面でない場合にボタンを制御
         if(quizStarted && dom.questionPreStart.classList.contains('hidden')) {
             dom.checkBtn.classList.remove('hidden');
         } else {
@@ -304,7 +314,6 @@ function setGradingMode(mode) {
         dom.endBtn.classList.add('hidden');
         dom.nextBtn.classList.add('hidden');
         
-        // クイズ開始後かつ結果表示前なら解答ボタンを表示
         if (quizStarted && dom.resultArea.classList.contains('hidden')) {
             dom.checkBtn.classList.remove('hidden');
         } else {
@@ -317,7 +326,7 @@ function setGradingMode(mode) {
 /**
  * 問題の表示を処理する
  * @param {object} dom DOM要素
- * @param {boolean} isInitialLoad 問題セットの最初の1問目かどうか
+ * @param {boolean} isInitialLoad 問題セットの最初の1問目かどうか (クイズ開始前かどうか)
  */
 function loadQuestion(dom, isInitialLoad = false) {
     if (currentQuestionIndex >= currentQuestionsSet.length) {
@@ -326,8 +335,8 @@ function loadQuestion(dom, isInitialLoad = false) {
     }
 
     const q = currentQuestionsSet[currentQuestionIndex];
-
-    // 画面を初期化
+    
+    // 画面の初期状態を設定
     dom.quizContainer.classList.remove('hidden'); 
     dom.resultsView.classList.add('hidden');
     dom.resultArea.classList.add('hidden');
@@ -341,25 +350,23 @@ function loadQuestion(dom, isInitialLoad = false) {
     
     
     if (isInitialLoad && !quizStarted) {
-        // 最初の1問目（クイズスタート前）の処理
+        // クイズスタート前の設定画面表示モード
         dom.questionPreStart.classList.remove('hidden');
-        dom.quizContainer.classList.add('hidden'); // コンテナを非表示
+        dom.quizContainer.classList.add('hidden'); 
         dom.timeDisplay.classList.add('hidden');
         
-        // 設定項目を有効化 (問題数入力のdisabled状態はstartQuizで設定されたものが維持される)
         dom.timeLimitSelect.disabled = false;
         dom.customTimeLimitInput.disabled = false;
         
     } else {
-        // クイズ開始後の問題読み込み
-        dom.questionPreStart.classList.add('hidden');
-        dom.quizContainer.classList.remove('hidden');
+        // クイズ開始後の問題読み込みモード (画面切り替えと問題表示)
+        dom.questionPreStart.classList.add('hidden'); // 設定画面を隠す
+        dom.quizContainer.classList.remove('hidden'); // クイズ画面を表示
         
         // タイマー表示の更新
         if (initialTimeLimit > 0) {
             dom.timeDisplay.classList.remove('hidden');
             dom.timeDisplayText.textContent = formatTime(timeRemaining);
-            // バーの幅を計算・設定
             const progressPercentage = (timeRemaining / initialTimeLimit) * 100;
             dom.timeBar.style.width = `${progressPercentage}%`;
         } else {
@@ -378,7 +385,22 @@ function loadQuestion(dom, isInitialLoad = false) {
         
         // 選択肢の生成
         dom.choicesContainer.innerHTML = '';
-        for (const [key, value] of Object.entries(q.choices)) {
+        
+        let choicesToIterate = q.choices || {}; 
+        
+        // R7問題（IDが 'R7_' で始まり、choicesオブジェクトが空）の場合、プレースホルダを強制生成
+        const isR7WithoutChoices = (q.id && q.id.startsWith('R7_') && Object.keys(q.choices || {}).length === 0);
+
+        if (isR7WithoutChoices) {
+            choicesToIterate = {
+                "ア": "（問題文に記載）",
+                "イ": "（問題文に記載）",
+                "ウ": "（問題文に記載）",
+                "エ": "（問題文に記載）"
+            };
+        }
+        
+        for (const [key, value] of Object.entries(choicesToIterate)) {
             const label = document.createElement('label');
             label.innerHTML = `<input type="radio" name="answer" value="${key}"> <span>${key}：${value}</span>`;
             dom.choicesContainer.appendChild(label);
@@ -415,50 +437,46 @@ function startQuizSetTimer() {
     const dom = initQuizDom();
     
     // 1. 問題数の設定 (currentQuestionsSetをここでスライスし、確定させる)
-    const maxQuestions = currentQuestionsSet.length; // full poolのサイズ
+    const maxQuestions = currentQuestionsSet.length;
     
     let requestedCount = maxQuestions;
     if (dom.questionCountInput && !dom.questionCountInput.disabled) {
-        // 問題数入力が有効な場合のみ、値を取得
         requestedCount = parseInt(dom.questionCountInput.value, 10);
     }
     
-    // 有効な問題数を計算 (1以上かつ最大問題数以下、または入力がない場合は全問)
+    // 有効な問題数を計算
     const finalCount = (requestedCount > 0 && requestedCount <= maxQuestions) ? requestedCount : maxQuestions;
     
     // currentQuestionsSetをスライスして、実際に使用する問題セットを確定
     currentQuestionsSet = currentQuestionsSet.slice(0, finalCount);
     
-    // 問題数が0ならエラー
     if (currentQuestionsSet.length === 0) {
         alert("出題する問題が見つかりませんでした。");
-        // 初期状態に戻る
-        router.showView('home'); 
+        if (typeof router !== 'undefined') router.showView('home'); 
         return;
     }
 
     // 状態をリセット/更新
     currentQuestionIndex = 0;
+    // 確定した問題数に合わせてuserAnswersのサイズを再設定
     userAnswers = new Array(currentQuestionsSet.length).fill(null);
     score = 0;
     dom.totalQCount.textContent = currentQuestionsSet.length; // 確定した出題数を表示
     
     // 2. タイマーの設定
-    
-    // カスタム入力欄を優先し、合計制限時間(initialTimeLimit)を確定
     const customTime = parseInt(dom.customTimeLimitInput.value, 10);
     if (customTime > 0) {
         initialTimeLimit = customTime;
     } 
     
-    timeRemaining = initialTimeLimit; // グローバル残り時間を初期化
+    timeRemaining = initialTimeLimit;
     
     quizStarted = true; // クイズ開始フラグをON
     
     // グローバルタイマーを開始
     startGlobalTimer(dom); 
     
-    // loadQuestionを再実行し、問題開始後の状態に切り替える
+    // loadQuestionを再実行し、問題開始後の状態に切り替える (isInitialLoad = false)
     loadQuestion(dom, false); 
 }
 
@@ -478,7 +496,7 @@ function stopTimer() {
  * @param {object} dom DOM要素
  */
 function startGlobalTimer(dom) {
-    stopTimer(); // 既存のタイマーを停止
+    stopTimer(); 
 
     if (initialTimeLimit <= 0 || !dom.timeDisplay) {
         if (dom.timeDisplay) {
@@ -487,29 +505,27 @@ function startGlobalTimer(dom) {
         return;
     }
     
-    dom.timeDisplay.classList.remove('hidden'); // タイマー表示を有効にする
+    dom.timeDisplay.classList.remove('hidden'); 
     
     // 初回描画
     dom.timeDisplayText.textContent = formatTime(timeRemaining);
     
-    // 初期のプログレスバーの幅を計算・設定 (100%からスタート)
     const initialProgressPercentage = 100;
     dom.timeBar.style.width = `${initialProgressPercentage}%`;
     dom.timeBar.style.backgroundColor = '#28a745';
 
     timerInterval = setInterval(() => {
-        // timeRemainingが0以下なら時間切れ処理を呼び出し、リターンする (0秒を表示してから終了)
         if (timeRemaining <= 0) {
             stopTimer();
             handleTimeUp(); 
             return;
         }
         
-        timeRemaining--; // グローバル残り時間を更新
+        timeRemaining--; 
 
         dom.timeDisplayText.textContent = formatTime(timeRemaining);
         
-        // プログレスバーの更新 (バーの幅を計算)
+        // プログレスバーの更新
         const progressPercentage = (timeRemaining / initialTimeLimit) * 100;
         dom.timeBar.style.width = `${progressPercentage}%`;
         
@@ -517,7 +533,7 @@ function startGlobalTimer(dom) {
         if (timeRemaining <= initialTimeLimit * 0.2 && timeRemaining > 0) {
             dom.timeBar.style.backgroundColor = '#ffc107';
         } else if (timeRemaining <= initialTimeLimit * 0.1 && timeRemaining > 0) {
-            dom.timeBar.style.backgroundColor = '#dc3545'; // 赤色をより早く
+            dom.timeBar.style.backgroundColor = '#dc3545';
         } else if (timeRemaining === 0) {
              dom.timeBar.style.backgroundColor = '#dc3545';
         } else {
@@ -528,26 +544,23 @@ function startGlobalTimer(dom) {
 }
 
 /**
- * タイムオーバー時の処理 (問題セット全体の時間切れ)
+ * タイムオーバー時の処理
  */
 function handleTimeUp() {
     stopTimer(); 
     const dom = initQuizDom();
     
-    // 最終採点モードの場合、未回答のまま終了
     if (currentQuestionIndex < currentQuestionsSet.length) {
         userAnswers[currentQuestionIndex] = 'UNANSWERED';
     }
     
     alert('時間切れです。採点結果を表示します。');
     
-    // 選択肢の操作を無効化
     dom.choicesContainer.querySelectorAll('input').forEach(input => input.disabled = true);
     dom.checkBtn.classList.add('hidden');
     dom.nextBtn.classList.add('hidden');
     dom.endBtn.classList.add('hidden');
     
-    // 強制的に結果表示へ
     showFinalResults();
 }
 
@@ -569,18 +582,16 @@ function checkAnswer() {
     userAnswers[currentQuestionIndex] = userAnswer;
     const isCorrect = (userAnswer === q.answer);
 
-    // 最終採点モードの場合、回答を保存して次の問題へ移行
     if (gradingMode === 'final') {
         loadNextQuestion();
         return;
     }
 
-    // 都度採点モードの場合: スコア更新、結果表示、ボタン制御
+    // 都度採点モード
     if (isCorrect) {
         score++;
     }
 
-    // 結果表示エリアの更新
     dom.resultArea.classList.remove('hidden');
     dom.checkBtn.classList.add('hidden');
 
@@ -592,7 +603,6 @@ function checkAnswer() {
         dom.resultMsg.style.color = '#dc3545';
     }
     
-    // 正解表示
     dom.correctAns.textContent = `正解: ${q.answer}`;
     dom.correctAns.style.color = '#28a745';
 
@@ -652,7 +662,6 @@ function checkAnswer() {
  */
 function loadNextQuestion() {
     currentQuestionIndex++;
-    // 問題開始後の問題読み込みのため、第2引数に false を渡す
     loadQuestion(initQuizDom(), false); 
 }
 
@@ -661,7 +670,7 @@ function loadNextQuestion() {
  * 最終結果の表示
  */
 function showFinalResults() {
-    stopTimer(); // タイマーを停止 
+    stopTimer(); 
     
     const dom = initQuizDom();
     let finalScore = 0;
@@ -681,7 +690,6 @@ function showFinalResults() {
                                       ? '未解答' 
                                       : `あなたの解答: ${userAnswer}`;
             
-            // 質問テキスト（簡略化のため最初の数行のみ表示）
             const questionSnippet = q.question.split('\n')[0].substring(0, 50) + '...';
 
             detailedResultsHTML += `
@@ -717,7 +725,6 @@ function showFinalResults() {
         }
     });
     
-    // スコアを更新
     score = finalScore;
     
     // クイズ全体の状態をリセット
